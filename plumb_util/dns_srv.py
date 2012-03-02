@@ -35,7 +35,7 @@ def _weighted_shuffle(weight_item_pairs,prng=random):
 
 def find_service(service, zone=None):
     """Return a properly-weighted try list of servers for the specified zone"""
-    service_name = service if zone is None else service + zone + '.'
+    service_name = service if zone is None else service + '.' + zone + '.'
     results = dns.resolver.query(service_name, 'SRV')
 
     # Group results by priority
