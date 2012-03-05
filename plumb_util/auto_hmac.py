@@ -49,3 +49,25 @@ def assert_hmac(msg, lookup):
     hm_digest = _hmac(handle + '\n' + str(msg['timestamp']) + '\n' + msg['msg'], alg_name, key)
     assert hm_digest == msg['hmac'], "Signature invalid"
     return True
+
+import json
+
+class AutoHMAC(object):
+    """A fully-automatic HMAC sign-and-verify service
+       NOTE: This class requires a CredClient object to operate, as provided by 
+       credservice."""
+    def __init__(self, tellme, resource='stomp-sig'):
+        """Initialize an AutoHMAC instance from a CredClient object)"""
+        secrets = tellme(resource)
+        self.signers = signers_from_secrets(secrets)
+        self.lookup = lookup_from_secrets(secrets)
+
+    def pack(self, obj):
+        """Pack an object for transmission"""
+        raw_msg = json.dumps(obj)
+        return hmac_wrap(raw_msg, self.signers[0])
+
+    def unpack(self, msg):
+        """Assert and unpack a signed message"""
+        assert_hmac(msg)
+        return json.loads(msg['msg'])
