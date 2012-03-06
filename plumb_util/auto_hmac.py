@@ -69,5 +69,5 @@ class AutoHMAC(object):
 
     def unpack(self, msg):
         """Assert and unpack a signed message"""
-        assert_hmac(msg)
+        assert_hmac(msg, self.lookup)
         return json.loads(msg['msg'])
