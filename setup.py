@@ -12,4 +12,8 @@ setup(
     description = "Plumbing utility library",
     packages=find_packages(),
     install_requires=['dnspython'],
+    entry_points={
+        'console_scripts':
+            ['gipython = plumb_util.cli:gipython',
+             ]},
 )
