@@ -33,6 +33,18 @@ def _weighted_shuffle(weight_item_pairs,prng=random):
     # This line should not be reached
     assert False, "The loop should have already returned."
 
+def find_text(service, zone=None):
+    """Return a TXT record for the specified service and zone"""
+    service_name = service if zone is None else service + '.' + zone + '.'
+    results = dns.resolver.query(service_name, 'TXT')
+    text = None
+
+    for record in results:
+        text = record.strings[0]
+        break
+
+    return text
+
 def find_service(service, zone=None):
     """Return a properly-weighted try list of servers for the specified zone"""
     service_name = service if zone is None else service + '.' + zone + '.'
