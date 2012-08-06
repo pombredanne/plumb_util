@@ -1,5 +1,6 @@
 
 import logging, logging.handlers
+from socket import error as socket_error
 
 def add_argparse_group(parser):
     """Add a configuration group for plumb_util to an argparser"""
