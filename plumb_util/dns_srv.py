@@ -1,4 +1,3 @@
-import stomp
 import random
 
 def _weighted_shuffle(weight_item_pairs,prng=random):
