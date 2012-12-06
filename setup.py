@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="plumb-util",
-    version = '0.1',
+    version = '0.2',
     maintainer='Luminoso, LLC',
     maintainer_email='dev@lumino.so',
     license = "MIT",
