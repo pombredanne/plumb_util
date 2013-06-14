@@ -2,9 +2,9 @@ from setuptools import setup, find_packages
 
 setup(
     name="plumb-util",
-    version = '0.2',
-    maintainer='Luminoso, LLC',
-    maintainer_email='dev@lumino.so',
+    version = '0.3',
+    maintainer='Luminoso Technologies, Inc.',
+    maintainer_email='dev@luminoso.com',
     license = "MIT",
     url = 'http://github.com/LuminosoInsight/plumb_util',
     platforms = ["any"],
