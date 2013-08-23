@@ -1,6 +1,7 @@
 
 import logging, logging.handlers
 from socket import error as socket_error
+from datetime import datetime
 
 def add_argparse_group(parser):
     """Add a configuration group for plumb_util to an argparser"""
@@ -11,11 +12,21 @@ def add_argparse_group(parser):
                        choices=['debug', 'info', 'warn', 'error'],
                        help = 'Set the syslog logging level.')
 
+
+# logging.Formatter insists on time tuples (which don't contain sub-second
+# resolution), and strftime format strings don't allow you to specify precision
+# on the microseconds.  So we need to subclass.  Annoying.
+class MillisecondLogFormatter(logging.Formatter):
+    def formatTime(self, record, dateFmt):
+        assert dateFmt.endswith('%f')
+        return datetime.fromtimestamp(record.created).strftime(dateFmt)[:-3]
+
+
 def init_logging(level, procname):
     logger = logging.root
     str_fmt = '%(asctime)s ' + procname + ': ' + logging.BASIC_FORMAT
-    date_fmt = '%b %d %H:%M:%S'
-    log_fmt = logging.Formatter(str_fmt, date_fmt)
+    date_fmt = '%b %d %H:%M:%S.%f'
+    log_fmt = MillisecondLogFormatter(str_fmt, date_fmt)
     try:
         h1 = logging.handlers.SysLogHandler(address='/dev/log',
                 facility=logging.handlers.SysLogHandler.LOG_LOCAL0)
