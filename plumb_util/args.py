@@ -1,6 +1,7 @@
 
 import logging, logging.handlers
 from socket import error as socket_error
+from datetime import datetime
 
 def add_argparse_group(parser):
     """Add a configuration group for plumb_util to an argparser"""
@@ -11,11 +12,22 @@ def add_argparse_group(parser):
                        choices=['debug', 'info', 'warn', 'error'],
                        help = 'Set the syslog logging level.')
 
+
+# Add sub-second time logging.
+#
+# Unfortunately time tuples don't contain sub-second resolution, and
+# logging.Formatter insists on using time tuples. So we override.
+class LogFormatter(logging.Formatter):
+    def formatTime(self, record, dateFmt):
+        timestamp = datetime.fromtimestamp(record.created)
+        return timestamp.strftime(dateFmt)
+
+
 def init_logging(level, procname):
     logger = logging.root
-    str_fmt = '%(asctime)s ' + procname + ': ' + logging.BASIC_FORMAT
-    date_fmt = '%b %d %H:%M:%S'
-    log_fmt = logging.Formatter(str_fmt, date_fmt)
+    str_fmt = '%(asctime)s. ' + procname + ': ' + logging.BASIC_FORMAT
+    date_fmt = '%b %d %H:%M:%S.%3f'
+    log_fmt = LogFormatter(str_fmt, date_fmt)
     try:
         h1 = logging.handlers.SysLogHandler(address='/dev/log',
                 facility=logging.handlers.SysLogHandler.LOG_LOCAL0)
