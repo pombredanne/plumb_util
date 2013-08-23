@@ -26,7 +26,7 @@ class LogFormatter(logging.Formatter):
 def init_logging(level, procname):
     logger = logging.root
     str_fmt = '%(asctime)s. ' + procname + ': ' + logging.BASIC_FORMAT
-    date_fmt = '%b %d %H:%M:%S.%3f'
+    date_fmt = '%b %d %H:%M:%S.%f'
     log_fmt = LogFormatter(str_fmt, date_fmt)
     try:
         h1 = logging.handlers.SysLogHandler(address='/dev/log',
