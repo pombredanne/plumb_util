@@ -13,21 +13,20 @@ def add_argparse_group(parser):
                        help = 'Set the syslog logging level.')
 
 
-# Add sub-second time logging.
-#
-# Unfortunately time tuples don't contain sub-second resolution, and
-# logging.Formatter insists on using time tuples. So we override.
-class LogFormatter(logging.Formatter):
+# logging.Formatter insists on time tuples (which don't contain sub-second
+# resolution), and strftime format strings don't allow you to specify precision
+# on the microseconds.  So we need to subclass.  Annoying.
+class MillisecondLogFormatter(logging.Formatter):
     def formatTime(self, record, dateFmt):
-        timestamp = datetime.fromtimestamp(record.created)
-        return timestamp.strftime(dateFmt)
+        assert dateFmt.endswith('%f')
+        return datetime.fromtimestamp(record.created).strftime(dateFmt)[:-3]
 
 
 def init_logging(level, procname):
     logger = logging.root
-    str_fmt = '%(asctime)s. ' + procname + ': ' + logging.BASIC_FORMAT
+    str_fmt = '%(asctime)s ' + procname + ': ' + logging.BASIC_FORMAT
     date_fmt = '%b %d %H:%M:%S.%f'
-    log_fmt = LogFormatter(str_fmt, date_fmt)
+    log_fmt = MillisecondLogFormatter(str_fmt, date_fmt)
     try:
         h1 = logging.handlers.SysLogHandler(address='/dev/log',
                 facility=logging.handlers.SysLogHandler.LOG_LOCAL0)
