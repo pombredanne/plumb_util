@@ -23,26 +23,27 @@ class MillisecondLogFormatter(logging.Formatter):
 
 
 def init_logging(level, procname):
-    logger = logging.root
+    root_logger = logging.root
+    root_logger.setLevel(level)
     str_fmt = '%(asctime)s ' + procname + ': ' + logging.BASIC_FORMAT
     date_fmt = '%b %d %H:%M:%S.%f'
     log_fmt = MillisecondLogFormatter(str_fmt, date_fmt)
-    try:
-        h1 = logging.handlers.SysLogHandler(address='/dev/log',
-                facility=logging.handlers.SysLogHandler.LOG_LOCAL0)
-    except socket_error:
-        h1 = None
 
-    h2 = logging.StreamHandler()
-    h2.setFormatter(log_fmt)
-    logger.addHandler(h2)
-    if h1 is not None:
-        h1.setFormatter(log_fmt)
-        logger.addHandler(h1)
-    logger.setLevel(level)
-    if h1 is None:
-        logger.warn('unable to initialize syslog logger')
-    return logger
+    stderr_handler = logging.StreamHandler()
+    stderr_handler.setFormatter(log_fmt)
+    root_logger.addHandler(stderr_handler)
+
+    try:
+        syslog_handler = logging.handlers.SysLogHandler(
+            address='/dev/log',
+            facility=logging.handlers.SysLogHandler.LOG_LOCAL0)
+    except socket_error:
+        root_logger.warn('unable to initialize syslog logger')
+    else:
+        syslog_handler.setFormatter(log_fmt)
+        root_logger.addHandler(syslog_handler)
+
+    return root_logger
 
 def logger_from_args(args, procname):
     # Set the log level
