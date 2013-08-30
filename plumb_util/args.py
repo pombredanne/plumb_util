@@ -1,16 +1,66 @@
 
-import logging, logging.handlers
+import logging, logging.handlers, logging.config
 from socket import error as socket_error
 from datetime import datetime
 
+DEFAULT_ROOT_LOG_LEVEL = 'ERROR'
+LOG_LEVEL_NAMES = {
+    'debug': 'DEBUG',
+    'info': 'INFO',
+    'warn': 'WARN',
+    'error': 'ERROR'
+    }
+
+
+def parse_log_level(arg):
+    """
+    Parse a `module=level` log level argument into a module name and a log level int.
+
+    Also accepts simply `level` to set the log level of the root logger.
+    """
+    if '=' in arg:
+        mod, level = arg.split('=', 1)
+    else:
+        mod = None
+        level = arg
+    if level not in LOG_LEVEL_NAMES:
+        raise ValueError("Invalid log level: " + level)
+    return mod, LOG_LEVEL_NAMES[level]
+
+def valid_log_level(arg):
+    """
+    Parses the log level to ensure that it's valid, but just returns
+    the original string.
+    """
+    # The following call is only for its error-raising side effects.
+    parse_log_level(arg)
+    return arg
+
+
 def add_argparse_group(parser):
     """Add a configuration group for plumb_util to an argparser"""
+    log_level_help = (
+        'Set the logging level. A bare level (e.g., "warn") sets the level of '
+        'the root logger (defaults to "error"); arguments of the form '
+        '"module=level" set the logging level for a particular module (and its '
+        'descendents, unless configured otherwise)')
     group = parser.add_argument_group('find_service', 'SRV lookup configuration')
     group.add_argument('-D', '--domain', type = str, dest = 'zone', default = None,
                        help = 'DNS domain to consult for service autodiscovery.')
-    group.add_argument('-L', '--loglevel', dest='log_level', default='error',
-                       choices=['debug', 'info', 'warn', 'error'],
-                       help = 'Set the syslog logging level.')
+    group.add_argument('-L', '--loglevel', dest='log_level', action='append',
+                       type=valid_log_level,
+                       help=log_level_help)
+
+
+def serialize_log_args(log_level_args):
+    """
+    Return a version of the logging arguments suitable to pass on to
+    another process also using this module.
+    """
+    args = []
+    for arg in log_level_args:
+        args.extend(['-L', arg])
+    return args
 
 
 # logging.Formatter insists on time tuples (which don't contain sub-second
@@ -22,9 +72,8 @@ class MillisecondLogFormatter(logging.Formatter):
         return datetime.fromtimestamp(record.created).strftime(dateFmt)[:-3]
 
 
-def init_logging(level, procname):
+def init_logging(procname, config_dict):
     root_logger = logging.root
-    root_logger.setLevel(level)
     str_fmt = '%(asctime)s ' + procname + ': ' + logging.BASIC_FORMAT
     date_fmt = '%b %d %H:%M:%S.%f'
     log_fmt = MillisecondLogFormatter(str_fmt, date_fmt)
@@ -43,17 +92,19 @@ def init_logging(level, procname):
         syslog_handler.setFormatter(log_fmt)
         root_logger.addHandler(syslog_handler)
 
+    # Use the config_dict to only update the log levels.
+    logging.config.dictConfig(dict(
+            config_dict, incremental=True, version=1))
+
     return root_logger
 
 def logger_from_args(args, procname):
-    # Set the log level
-    if args.log_level == 'debug':
-        level=logging.DEBUG
-    elif args.log_level == 'info':
-        level=logging.INFO
-    elif args.log_level == 'warn':
-        level=logging.WARN
-    elif args.log_level == 'error':
-        level=logging.ERROR
-    return init_logging(level, procname)
+    levels = {None: DEFAULT_ROOT_LOG_LEVEL}
+    levels.update(map(parse_log_level, args.log_level))
+
+    config_dict = {'root': {'level': levels.pop(None)}}
+    config_dict['loggers'] = {module: {'level': level}
+                              for module, level in levels.iteritems()}
+
+    return init_logging(procname, config_dict)
 
