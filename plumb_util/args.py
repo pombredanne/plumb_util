@@ -4,28 +4,25 @@ from socket import error as socket_error
 from datetime import datetime
 
 DEFAULT_ROOT_LOG_LEVEL = 'ERROR'
-LOG_LEVEL_NAMES = {
-    'debug': 'DEBUG',
-    'info': 'INFO',
-    'warn': 'WARN',
-    'error': 'ERROR'
-    }
+LOG_LEVEL_NAMES = ['DEBUG', 'INFO', 'WARN', 'WARNING', 'ERROR', 'CRITICAL']
 
 
 def parse_log_level(arg):
     """
-    Parse a `module=level` log level argument into a module name and a log level int.
+    Parse a `module=level` log level argument into a module name and a log
+    level (as identifiable by the logging module).
 
-    Also accepts simply `level` to set the log level of the root logger.
+    Also accepts simply `level` to set the log level of the root logger, in
+    which case it returns None as the module name.
     """
     if '=' in arg:
         mod, level = arg.split('=', 1)
     else:
         mod = None
         level = arg
-    if level not in LOG_LEVEL_NAMES:
+    if level.upper() not in LOG_LEVEL_NAMES:
         raise ValueError("Invalid log level: " + level)
-    return mod, LOG_LEVEL_NAMES[level]
+    return mod, level.upper()
 
 def valid_log_level(arg):
     """
