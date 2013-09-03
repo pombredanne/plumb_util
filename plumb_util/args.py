@@ -48,7 +48,7 @@ def add_argparse_group(parser):
     group.add_argument('-D', '--domain', type = str, dest = 'zone', default = None,
                        help = 'DNS domain to consult for service autodiscovery.')
     group.add_argument('-L', '--loglevel', dest='log_level', action='append',
-                       type=valid_log_level,
+                       default=[], type=valid_log_level,
                        help=log_level_help)
 
 
